@@ -28,7 +28,9 @@
 ## Project setup
 
 ```bash
-$ npm install
+1. add .env file based on .env.template file
+2. npm install
+3. npm run start:dev
 ```
 
 ## Compile and run the project

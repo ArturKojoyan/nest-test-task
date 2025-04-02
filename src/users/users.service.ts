@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -50,24 +51,58 @@ export class UsersService {
 
   async addPermissionToUser(
     userId: string,
+    companyId: string,
+    permission: PermissionLevel,
+  ): Promise<User | null> {
+    console.log('🚀 ~ UsersService ~ permission:', permission);
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!(companyId in user.permissions)) {
+      user.permissions[companyId] = [];
+    }
+    const userPermissions = user.permissions[companyId];
+    if (userPermissions.includes(permission)) {
+      throw new ConflictException(
+        `User already has permission '${permission}' for company '${companyId}'`,
+      );
+    }
+    userPermissions.push(permission);
+    user.markModified('permissions');
+
+    return user.save();
+  }
+
+  async removePermissionFromUser(
+    userId: string,
+    companyId: string,
     permission: PermissionLevel,
   ): Promise<User | null> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new NotFoundException('User not found');
     }
 
-    user.permission = permission;
-    return user.save();
-  }
-
-  async removePermissionFromUser(userId: string): Promise<User | null> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+    if (!(companyId in user.permissions)) {
+      throw new ConflictException(
+        `User with id ${userId} has no permission '${permission}' for company '${companyId}'`,
+      );
+    }
+    const userPermissions = user.permissions[companyId];
+    if (userPermissions.includes(permission)) {
+      user.permissions[companyId] = userPermissions.filter(
+        (perm) => perm !== permission,
+      );
+      user.markModified('permissions');
+    } else {
+      throw new ConflictException(
+        `User has no permission '${permission}' for company '${companyId}'`,
+      );
     }
 
-    user.permission = PermissionLevel.READ; // Reset to default permission
+    user.markModified('permissions');
     return user.save();
   }
 }

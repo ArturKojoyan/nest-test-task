@@ -9,6 +9,7 @@ export enum PermissionLevel {
   DELETE = 'DELETE',
   ADMIN = 'ADMIN',
 }
+type Permissions = Record<string, Array<PermissionLevel>>;
 
 @Schema()
 export class User {
@@ -24,13 +25,9 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  // Relationship with Company
-  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
-  companyId: Types.ObjectId; // Reference to the Company
-
   // Permissions for all projects owned by the company
-  @Prop({ required: true, enum: PermissionLevel })
-  permission: PermissionLevel;
+  @Prop({ required: true, type: Object })
+  permissions: Permissions;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

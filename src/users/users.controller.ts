@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -10,9 +11,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import { PermissionLevel } from 'src/schemas/user.schema';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { AdminGuard } from 'src/guards/admin.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { RolesGuard } from 'src/guards/role.guard';
 
-@Controller('user')
+@Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
@@ -21,48 +23,46 @@ export class UsersController {
     return this.userService.create(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @Post('add-permission/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('/:userId/add-permission/companies/:companyId')
   async addPermissionToUser(
     @Body('permission') permission: PermissionLevel,
     @Param('userId') userId: string,
+    @Param('companyId') companyId: string,
   ) {
     if (!userId) {
       return new BadRequestException('User ID is required');
     }
-    if (!permission) {
-      return new BadRequestException('Permission is required');
+    if (!permission || !companyId) {
+      return new BadRequestException('permission and companyId are required');
     }
 
-    try {
-      const data = await this.userService.addPermissionToUser(
-        userId,
-        permission,
-      );
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      return new BadRequestException(
-        `Failed to update user's permission with ID ${userId}`,
-      );
-    }
+    const data = await this.userService.addPermissionToUser(
+      userId,
+      companyId,
+      permission,
+    );
+    return { data, message: 'Permission added successfully' };
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @Post('remove-permission/:userId')
-  async removePermissionFromUser(@Param('userId') userId: string) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('/:userId/remove-permission/companies/:companyId')
+  async removePermissionFromUser(
+    @Body('permission') permission: PermissionLevel,
+    @Param('userId') userId: string,
+    @Param('companyId') companyId: string,
+  ) {
     if (!userId) {
       return new BadRequestException('User ID is required');
     }
 
-    try {
-      const data = await this.userService.removePermissionFromUser(userId);
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      return new BadRequestException(
-        `Failed to remove permission from user with ID ${userId}`,
-      );
-    }
+    const data = await this.userService.removePermissionFromUser(
+      userId,
+      companyId,
+      permission,
+    );
+    return { data, message: 'Permission removed successfully' };
   }
 }

@@ -5,25 +5,23 @@ import {
   Get,
   Param,
   Patch,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { CustomRequest, RolesGuard } from 'src/guards/role.guard';
+import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { ProjectsService } from './projects.service';
 import { UpdateProjectDto } from './dtos/update-project.dto';
 
-@Controller('project')
+@Controller('companies/:companyId/projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Roles('ADMIN', 'READ')
   @Get()
-  async getAllProjects(@Req() req: CustomRequest) {
-    const { companyId } = req.user;
-    return this.projectsService.findAll(String(companyId));
+  async getAllProjects(@Param('companyId') companyId: string) {
+    return this.projectsService.findAll(companyId);
   }
 
   @Patch(':id')
@@ -32,19 +30,11 @@ export class ProjectsController {
     @Body() updateProjectDto: UpdateProjectDto,
     @Param('id') id: string,
   ) {
-    if (!id) {
-      throw new BadRequestException('Project ID is required');
-    }
     if (!updateProjectDto) {
       return new BadRequestException('payload is required');
     }
 
-    try {
-      const data = this.projectsService.updateOne(id, updateProjectDto);
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      throw new BadRequestException(`Failed to update project with ID ${id}`);
-    }
+    const data = this.projectsService.updateOne(id, updateProjectDto);
+    return data;
   }
 }

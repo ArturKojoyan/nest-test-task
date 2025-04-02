@@ -21,12 +21,12 @@ export class AuthController {
     @Body()
     body: CreateUserDto,
   ) {
-    const { name, age, email, password, permission, companyId } = body;
+    const { name, age, email, password, permissions, companyId } = body;
 
     // Validate input
-    if (!name || !email || !password || !permission || !companyId) {
-      throw new BadRequestException(
-        'name, email, password, permission and companyId fields are required',
+    if (!name || !email || !password || !permissions || !companyId) {
+      return new BadRequestException(
+        'name, email, password, permissions and companyId fields are required',
       );
     }
 
@@ -36,7 +36,7 @@ export class AuthController {
       email,
       password,
       companyId,
-      permission,
+      permissions,
       age,
     });
     return {
@@ -44,8 +44,7 @@ export class AuthController {
       user: {
         name: user.name,
         email: user.email,
-        companyId: user.companyId,
-        permission: user.permission,
+        permissions: user.permissions,
       },
     };
   }

@@ -18,7 +18,4 @@ export class CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   readonly tags: Array<string>;
-
-  @IsString()
-  readonly companyId: string;
 }

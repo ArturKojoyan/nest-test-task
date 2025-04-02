@@ -1,11 +1,13 @@
 import {
   IsEmail,
   IsInt,
+  IsObject,
   IsString,
   Length,
   Max,
   Min,
 } from '@nestjs/class-validator';
+import type { PermissionLevel } from 'src/schemas/user.schema';
 
 export class CreateUserDto {
   @IsString()
@@ -27,6 +29,6 @@ export class CreateUserDto {
   @IsString()
   readonly companyId: string;
 
-  @IsString()
-  readonly permission: string;
+  @IsObject()
+  readonly permissions: Record<string, Array<PermissionLevel>>; // Adjusted to use string instead of PermissionLevel
 }
